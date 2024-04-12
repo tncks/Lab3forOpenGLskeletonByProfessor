@@ -6,6 +6,26 @@ import glfw
 import OpenGL.GL
 from OpenGL.GL import *
 
+M = np.array([[1.,0.,0.],[0.,1.,0.],[1.,1.,1.]])  # accumulation Matrix, global var
+
+
+def translateX(dx):
+    return np.array([
+        [1, 0, dx],
+        [0, 1, 0],
+        [0, 0, 1]
+    ])
+
+# By default, positive angle -> counter clock wise rotation
+def rotate_it_on_2D_plane(angle):
+    theta = np.radians(angle)
+    return np.array(
+        [
+            [np.cos(theta), -np.sin(theta), 0],
+            [np.sin(theta), np.cos(theta), 0],
+            [0, 0, 1],
+        ]
+    )
 
 def render(T):
     glClear(GL_COLOR_BUFFER_BIT)
@@ -32,39 +52,36 @@ def init():
     gluOrtho2D(-1.0, 1.0, -1.0, 1.0)
 
 def key_callback(window, key, scancode, action, mods):
-    primitive = {glfw.KEY_1: GL_POINTS,
-            glfw.KEY_2: GL_LINES, 
-            glfw.KEY_3: GL_LINE_STRIP, 
-            glfw.KEY_4: GL_LINE_LOOP, 
-            glfw.KEY_5: GL_TRIANGLES, 
-            glfw.KEY_6: GL_TRIANGLE_STRIP, 
-            glfw.KEY_7: GL_TRIANGLE_FAN, 
-            glfw.KEY_8: GL_QUADS, 
-            glfw.KEY_9: GL_QUAD_STRIP, 
-            glfw.KEY_0: GL_POLYGON}
 
-    ppppprimnew = {glfw.KEY_Q: GL_LINES,
-            glfw.KEY_E: GL_LINES,
-            glfw.KEY_A: GL_LINES,
-            glfw.KEY_D: GL_LINES}
 
-    if key >= glfw.KEY_0 and key <= glfw.KEY_9:
-        if action == glfw.PRESS:
-            val = primitive[key]
-        elif action == glfw.RELEASE:
-            print('digitkey released')
-        elif action == glfw.REPEAT:
-            print('digitkey repeated')
 
+    global M
     if key == glfw.KEY_Q or key == glfw.KEY_E or key == glfw.KEY_A or key == glfw.KEY_D:
         if action == glfw.PRESS:
-            print('')
+            if key == glfw.KEY_Q:
+                #M = M @ translateX(-0.1)   # potential problem exist <- this line
+                M[0, 2] -= 0.1
+            elif key == glfw.KEY_E:
+                #M = M @ translateX(0.1)   # potential problem exist <- this line
+                M[0, 2] += 0.1
+            elif key == glfw.KEY_A:
+                M = M @ rotate_it_on_2D_plane(10)
+            else:                                # else block means -> key == KEY_D true condition!
+                M = M @ rotate_it_on_2D_plane(-10)
         elif action == glfw.RELEASE:
-            print('charkey released')
+            print('key released')
         elif action == glfw.REPEAT:
-            print('charkey repeated')
-
-
+            print('key repeated')
+    elif key == glfw.KEY_1:
+        if action == glfw.PRESS:
+            M = np.array([[1.,0.,0.],[0.,1.,0.],[1.,1.,1.]])
+        elif action == glfw.RELEASE:
+            print('reset released')
+        elif action == glfw.REPEAT:
+            print('reset repeated')
+    else:
+        return
+        
 
 
 def main():
@@ -81,8 +98,8 @@ def main():
 
     while not glfw.window_should_close(window):
         glfw.poll_events()
-        T = np.array([[1.,0.,0.],[0.,1.,0.],[1.,1.,1.]])
-
+        global M
+        T = M
         render(T)
         glfw.swap_buffers(window)
 
